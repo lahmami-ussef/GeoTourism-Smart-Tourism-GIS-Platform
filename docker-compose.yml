@@ -3,25 +3,40 @@ services:
     image: postgis/postgis:16-3.5
     container_name: geotourism-db
     restart: unless-stopped
-
     environment:
       POSTGRES_DB: geotourism
       POSTGRES_USER: geotourism_user
       POSTGRES_PASSWORD: ${DB_PASSWORD}
-
     ports:
       - "5433:5432"
-
     volumes:
       - geotourism_data:/var/lib/postgresql/data
       - ./database/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
       - ./database/seed.sql:/docker-entrypoint-initdb.d/02-seed.sql:ro
-
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U geotourism_user -d geotourism"]
       interval: 5s
       timeout: 5s
       retries: 5
 
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: pgadmin
+    restart: unless-stopped
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@example.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+      PGADMIN_CONFIG_SERVER_MODE: "False"
+      PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED: "False"
+    ports:
+      - "5050:80"
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+      - ./servers.json:/pgadmin4/servers.json:ro
+    depends_on:
+      db:
+        condition: service_healthy
+
 volumes:
   geotourism_data:
+  pgadmin_data:
